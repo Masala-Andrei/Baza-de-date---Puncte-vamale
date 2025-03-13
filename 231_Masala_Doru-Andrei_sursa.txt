@@ -1,0 +1,1208 @@
+--4
+
+CREATE SEQUENCE id_punct_vamal_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_vehicul_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_serviciu_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_firma_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_agent_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_calator_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_pasaport_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+
+CREATE SEQUENCE id_declaratie_bunuri_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_declaratie_vamala_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE SEQUENCE id_incident_sq
+START WITH 1
+INCREMENT BY 1
+MAXVALUE 1000
+NOCACHE
+NOCYCLE;
+
+CREATE TABLE PUNCT_VAMAL(id_punct_vamal INT DEFAULT id_punct_vamal_sq.NEXTVAL PRIMARY KEY,
+nume VARCHAR(30) NOT NULL UNIQUE,
+judet VARCHAR(30) NOT NULL,
+capacitate_maxima INT NOT NULL CHECK(capacitate_maxima < 500),
+numar_telefon VARCHAR(30) NOT NULL,
+granita VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE AGENT_VAMAL(
+id_agent_vamal INT DEFAULT id_agent_sq.NEXTVAL PRIMARY KEY,
+id_punct_vamal INT, 
+nume VARCHAR(30) NOT NULL,
+prenume VARCHAR(60) NOT NULL,
+numar_telefon VARCHAR(18) UNIQUE,
+functie VARCHAR(30) NOT NULL,
+tura VARCHAR(20),
+FOREIGN KEY(id_punct_vamal) REFERENCES PUNCT_VAMAL(id_punct_vamal)
+);
+
+CREATE TABLE INCIDENT(
+id_incident INT DEFAULT id_incident_sq.NEXTVAL PRIMARY KEY,
+id_agent_vamal INT,
+tip VARCHAR(100) NOT NULL,
+data TIMESTAMP NOT NULL,
+FOREIGN KEY(id_agent_vamal) REFERENCES AGENT_VAMAL(id_agent_vamal)
+);
+
+CREATE TABLE FIRMA(
+id_firma INT DEFAULT id_firma_sq.NEXTVAL PRIMARY KEY,
+numar_telefon VARCHAR(18),
+forma_organizare VARCHAR(20) NOT NULL,
+tara_provenienta VARCHAR(30) NOT NULL,
+cod_inregistrare VARCHAR(30) NOT NULL UNIQUE,
+CHECK (forma_organizare in ('PFA', 'II', 'IF', 'SRL', 'SNC', 'SA', 'SCS', 'SCA', 'SE', 'GEIE', 'GIE', 'COOPERATIVA', 'AGRICOLA'))
+);
+
+CREATE TABLE SERVICIU(
+id_serviciu INT DEFAULT id_serviciu_sq.NEXTVAL PRIMARY KEY,
+valoare INT CHECK (valoare < 1000000),
+cod_cpv VARCHAR(12),
+denumire VARCHAR(100)
+);
+
+CREATE TABLE  CONTRACT(
+id_punct_vamal INT NOT NULL,
+id_serviciu INT NOT NULL,
+id_firma INT NOT NULL,
+CONSTRAINT pk_contract PRIMARY KEY (id_punct_vamal,id_serviciu,id_firma),
+FOREIGN KEY(id_punct_vamal) REFERENCES PUNCT_VAMAL(id_punct_vamal),
+FOREIGN KEY(id_serviciu) REFERENCES SERVICIU(id_serviciu),
+FOREIGN KEY(id_firma) REFERENCES FIRMA(id_firma)
+);
+
+CREATE TABLE VEHICUL(
+id_vehicul INT DEFAULT id_vehicul_sq.NEXTVAL PRIMARY KEY,
+marca VARCHAR(30) NOT NULL,
+numar_matriculare VARCHAR(30) NOT NULL UNIQUE,
+culoare VARCHAR(30) NOT NULL,
+tip_vehicul VARCHAR(20) NOT NULL CHECK(tip_vehicul in ('TRANSPORT_PERSOANE', 'TRANSPORT_MARFA'))
+);
+
+CREATE TABLE TRANSPORT_PERSOANE(
+id_vehicul  PRIMARY KEY,
+numar_persoane INT CHECK (numar_persoane < 100),
+numar_usi INT CHECK (numar_usi < 6),
+FOREIGN KEY(id_vehicul) REFERENCES VEHICUL(id_vehicul)
+);
+
+CREATE TABLE TRANSPORT_MARFA(
+id_vehicul NOT NULL PRIMARY KEY,
+tonaj INT CHECK (tonaj < 40),
+volum INT CHECK (volum < 150),
+FOREIGN KEY(id_vehicul) REFERENCES VEHICUL(id_vehicul)
+);
+
+CREATE TABLE TRANZITARE(
+id_punct_vamal INT NOT NULL,
+id_vehicul INT NOT NULL,
+data_tranzitare TIMESTAMP NOT NULL,
+sens VARCHAR(20),
+CONSTRAINT pk_tranzitare PRIMARY KEY (id_punct_vamal, id_vehicul, data_tranzitare),
+FOREIGN KEY(id_punct_vamal) REFERENCES PUNCT_VAMAL(id_punct_vamal),
+FOREIGN KEY(id_vehicul) REFERENCES VEHICUL(id_vehicul)
+);
+
+CREATE TABLE CALATOR(
+id_calator INT DEFAULT id_calator_sq.NEXTVAL PRIMARY KEY,
+id_vehicul INT,
+nume VARCHAR(30) NOT NULL,
+prenume VARCHAR(60) NOT NULL,
+sex VARCHAR(1) NOT NULL check (sex in ('F', 'M')),
+scop VARCHAR(30) NOT NULL,
+FOREIGN KEY(id_vehicul) REFERENCES VEHICUL(id_vehicul)
+);
+
+CREATE TABLE PASAPORT(
+id_pasaport INT DEFAULT id_pasaport_sq.NEXTVAL PRIMARY KEY,
+id_calator INT,
+numar VARCHAR(15) NOT NULL UNIQUE,
+nume VARCHAR(30) NOT NULL,
+prenume VARCHAR(60) NOT NULL,
+tara_provenienta VARCHAR(30) NOT NULL,
+sex VARCHAR(1) NOT NULL check (sex in ('F', 'M')),
+data_nasterii DATE NOT NULL,
+data_de_expirare DATE NOT NULL,
+tip_pasaport VARCHAR(20) NOT NULL CHECK (tip_pasaport in ('normal','diplomatic','oficial','temporar','colectiv','special')),
+FOREIGN KEY(id_calator) REFERENCES CALATOR(id_calator)
+);
+
+CREATE TABLE DECLARATIE_BUNURI(
+id_declaratie_bunuri INT DEFAULT id_declaratie_bunuri_sq.NEXTVAL PRIMARY KEY,
+id_calator INT,
+valoare INT NOT NULL CHECK (valoare < 100000),
+tip_bunuri VARCHAR(40) CHECK (tip_bunuri in ('arme', 'substante psihotrope', 'metale pretioase', 'culturale')),
+FOREIGN KEY(id_calator) REFERENCES CALATOR(id_calator)
+);
+
+CREATE TABLE DECLARATIE_VAMALA(
+id_declaratie_vamala INT DEFAULT id_declaratie_vamala_sq.NEXTVAL PRIMARY KEY,
+id_vehicul INT,
+EORI VARCHAR(18) NOT NULL UNIQUE,
+tip VARCHAR(7) CHECK (tip in ('import', 'export', 'tranzit')),
+valoare_comerciala INT CHECK (valoare_comerciala < 1000000),
+tara_origine VARCHAR(40) NOT NULL,
+incarcatura VARCHAR(200) NOT NULL,
+FOREIGN KEY(id_vehicul) REFERENCES TRANSPORT_MARFA(id_vehicul)
+);
+
+
+--5
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Bors', 'Bihor', 250, '0259316070', 'Ungaria');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Cenad', 'Timis', 110, '0256493187', 'Ungaria');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Giurgiu', 'Giurgiu', 300, '0246274642', 'Bulgaria');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Jimbolia', 'Timis', 120, '0256360269', 'Serbia');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Calafat', 'Dolj', 180, ' 0251333006', 'Bulgaria');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Siret', 'Suceava', 120, '0230280661', 'Ucraina');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Petea', 'Satu Mare', 120, '0261751326', 'Ungaria');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Portile de fier I', 'Satu Mare', 120, '0252355231', 'Serbia');
+
+INSERT INTO PUNCT_VAMAL(nume, judet, capacitate_maxima, numar_telefon, granita)
+VALUES('Portile de fier II', 'Satu Mare', 140, '0252355231', 'Serbia');
+
+
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (2, 'Ionescu', 'Mihai', '0722123457', 'Inspector', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (1, 'Georgescu', 'Maria', '0722123458', 'Agent', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (9, 'Dumitrescu', 'Ana', '0722123459', 'Agent', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (9, 'Vasilescu', 'Cristian', '0722123460', 'Inspector', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (1, 'Constantinescu', 'Elena', '0722123461', 'Agent', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (7, 'Marinescu', 'Dan', '0722123462', 'Inspector', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (8, 'Radu', 'Ioana', '0722123463', 'Agent', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (2, 'Petrescu', 'Andreea', '0722123465', 'Agent', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (3, 'Radulescu', 'George', '0722123466', 'Administrator', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (4, 'Nistor', 'Ioan', '0722123467', 'Agent', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (5, 'Sandu', 'Raluca', '0722123468', 'Inspector', '8:00 - 16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (6, 'Dobre', 'Florin', '0722123469', 'Agent', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (7, 'Voicu', 'Elisabeta', '0722123470', 'Administrator', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (8, 'Iliescu', 'Victor', '0722123471', 'Agent', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (1, 'Stefanescu', 'Lucian', '0722123472', 'Inspector', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (2, 'Badea', 'Alina', '0722123473', 'Agent', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (1, 'Ene', 'Sorin', '0722123474', 'Administrator', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (5, 'Preda', 'Alexandra', '0722123476', 'Inspector', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (6, 'Neagu', 'Adrian', '0722123477', 'Agent', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (7, 'Dragomir', 'Cristina', '0722123478', 'Administrator', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (8, 'Serban', 'Ioana', '0722123479', 'Agent', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (1, 'Albescu', 'Mircea', '0722123480', 'Inspector', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (2, 'Zamfir', 'Oana', '0722123481', 'Agent', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (3, 'Bucur', 'Dorin', '0722123482', 'Administrator', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (4, 'Chirila', 'Irina', '0722123483', 'Agent', '16:00-0:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (5, 'Duta', 'Paul', '0722123484', 'Inspector', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (6, 'Ene', 'Madalina', '0722123485', 'Agent', '8:00-16:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (7, 'Florescu', 'Adrian', '0722123486', 'Administrator', '0:00-8:00');
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (8, 'Ghita', 'Bianca', '0722123487', 'Agent', '0:00-8:00');
+
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (19, 'Substante ilegale raportate', TO_TIMESTAMP('2024-05-10 14:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (21, 'Documente falsificate', TO_TIMESTAMP('2024-05-12 09:15:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (3, 'Documente falsificate', TO_TIMESTAMP('2024-02-13 11:45:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (12, 'Substante ilegale raportate', TO_TIMESTAMP('2024-03-15 16:20:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (5, 'Comportament dubios al pasagerilor', TO_TIMESTAMP('2024-07-17 13:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (6, 'Documente falsificate', TO_TIMESTAMP('2024-04-19 10:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (17, 'Bunuri neraportate', TO_TIMESTAMP('2024-05-21 15:50:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (8, 'Tentativa de mita', TO_TIMESTAMP('2023-12-23 12:10:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (9, 'Tentativa de mita', TO_TIMESTAMP('2023-12-25 08:40:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+VALUES (25, 'Accident în timpul controlului', TO_TIMESTAMP('2024-05-27 17:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123456', 'SRL', 'Franta', 'FR12345678');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123457', 'SA', 'Romania', 'RO23456789');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123458', 'PFA', 'Germania', 'DE34562312');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123459', 'II', 'Franta', 'FR47856019');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123460', 'SNC', 'Romania', 'RO56789012');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123461', 'SCA', 'Romania', 'RO67123890');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123462', 'SE', 'Italia', 'IT78901234');
+
+INSERT INTO FIRMA (numar_telefon, forma_organizare, tara_provenienta, cod_inregistrare) 
+VALUES ('0745123465', 'GIE', 'Romania', 'RO01234567');
+
+
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (90720, '90511200-4', 'Servicii de colectare a gunoiului menajer');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (4800, '50421200-4', 'Servicii de reparare si de intretinere a echipamentului radiologic');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (600, '71700000-5', 'Servicii de monitorizare si de control');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (2521, '31625300-6', 'Sisteme de alarmă antiefracţie');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (10000, '71700000-5', 'Servicii de monitorizare si de control');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (5132, '31625300-6', 'Sisteme de alarmă antiefracţie');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (7140, '35230000-5', 'Cătuşe');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (139500, '63100000-0', 'Servicii de manipulare şi de depozitare a încărcăturilor');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (2110, '90921000-9', 'Servicii de dezinfecţie şi de dezinsecţie ');
+
+INSERT INTO SERVICIU (valoare, cod_cpv, denumire) 
+VALUES (600000, '71700000-5', 'Servicii de monitorizare si de control');
+
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (1, 1, 3);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (2, 1, 3);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (8, 1, 3);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (1, 2, 7);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (3, 4, 7);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (1, 5, 1);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (5, 10, 6);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (1, 4, 1);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (4, 5, 6);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (4, 10, 6);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (9, 2, 1);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (8, 2, 1);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (8, 4, 7);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (4, 1, 8);
+
+INSERT INTO CONTRACT (id_punct_vamal, id_serviciu, id_firma) 
+VALUES (5, 1, 8);
+
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Dacia', 'B123XYZ', 'Albastru', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Renault', 'B456XYZ', 'Rosu', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Mercedes', 'B0756PM', 'Negru', 'TRANSPORT_MARFA');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('BMW', 'C9396HP', 'Alb', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Dacia', 'AA-BP-022', 'Gri', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Ford', 'AA-BP-123', 'Verde', 'TRANSPORT_MARFA');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Audi', 'IBH-9920', 'Albastru', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Toyota', 'IBX-5470', 'Galben', 'TRANSPORT_MARFA');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Nissan', 'B567XYZ', 'Rosu', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Hyundai', 'B112XYZ', 'Albastru', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Kia', 'B223XYZ', 'Rosu', 'TRANSPORT_PERSOANE');
+
+INSERT INTO VEHICUL (marca, numar_matriculare, culoare, tip_vehicul) 
+VALUES ('Peugeot', 'B334XYZ', 'Negru', 'TRANSPORT_MARFA');
+
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (5,2,4);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (10,2,2);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (7,1,4);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (11,1,4);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (4,3,4);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (9,3,4);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (2,2,2);
+
+INSERT INTO TRANSPORT_PERSOANE (id_vehicul, numar_persoane, numar_usi)
+VALUES (1,3,4);
+
+
+
+INSERT INTO TRANSPORT_MARFA (id_vehicul, tonaj, volum)
+VALUES (6,20,100);
+
+INSERT INTO TRANSPORT_MARFA (id_vehicul, tonaj, volum)
+VALUES (8,18,90);
+
+INSERT INTO TRANSPORT_MARFA (id_vehicul, tonaj, volum)
+VALUES (12,35,135);
+
+INSERT INTO TRANSPORT_MARFA (id_vehicul, tonaj, volum)
+VALUES (3,39,149);
+
+
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (1, 3, TIMESTAMP '2024-05-01 08:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)  
+VALUES (1, 6, TIMESTAMP '2024-05-02 10:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (2, 8, TIMESTAMP '2024-07-12 13:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (3, 6, TIMESTAMP '2024-12-05 21:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (3, 5, TIMESTAMP '2024-12-12 13:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (3, 2, TIMESTAMP '2024-12-15 21:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (4, 5, TIMESTAMP '2024-09-04 15:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (5, 7, TIMESTAMP '2024-03-05 08:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (6, 7, TIMESTAMP '2024-05-06 10:30:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (7, 3, TIMESTAMP '2024-05-12 12:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens) 
+VALUES (7, 1, TIMESTAMP '2024-06-07 20:15:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (8, 8, TIMESTAMP '2024-05-08 14:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (8, 3, TIMESTAMP '2024-05-10 15:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (9, 3, TIMESTAMP '2024-08-01 06:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (10, 3, TIMESTAMP '2024-08-01 06:10:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (11, 5, TIMESTAMP '2024-05-10 06:00:00', 'Intrare');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (11, 5, TIMESTAMP '2024-05-10 20:00:00', 'Iesire');
+
+INSERT INTO TRANZITARE (id_vehicul,id_punct_vamal, data_tranzitare, sens)
+VALUES (12, 7, TIMESTAMP '2024-05-10 11:00:00', 'Intrare');
+
+
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (3, 'FR77620498591304', 'import', 500000, 'Romania', 'Electronice diverse');
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (6, 'DE65267586599943', 'tranzit', 750000, 'China', 'Mobilier de lemn');
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (8, 'GR16228854299310', 'tranzit', 250000, 'Germania', 'Electronice');
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (12, 'RO54610564139441', 'tranzit', 250000, 'Germania', 'Produse cosmetice');
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (3, 'RO10917234248347', 'export', 250000, 'Grecia', 'Mobilier de lemn');
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (6, 'BG60003553049068', 'tranzit', 250000, 'Germania', 'Produse cosmetice');
+
+INSERT INTO DECLARATIE_VAMALA (id_vehicul, EORI, tip, valoare_comerciala, tara_origine, incarcatura)
+VALUES (6, 'HU38480584361268', 'tranzit', 250000, 'Germania', 'Textile si imbracaminte');
+
+
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (1, 'Popescu', 'Ana', 'F', 'Vacanta');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (1, 'Ionescu', 'Mihai', 'M', 'Vacanta');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (1, 'Radu', 'Maria', 'F', 'Vacanta');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (2, 'Dumitrescu', 'Andrei', 'M', 'Vizita');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (2, 'Constantinescu', 'Elena', 'F', 'Vizita');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (4, 'Stefanescu', 'Ion', 'M', 'Afaceri');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (4, 'Georgescu', 'Andreea', 'F', 'Afaceri');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (4, 'Iordache', 'George', 'M', 'Afaceri');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (3, 'Popa', 'Alexandra', 'F', 'Transport Marfa');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (5, 'Voicu', 'Cristian', 'M', 'Tranzit');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (5, 'Dragomir', 'Ana', 'F', 'Tranzit');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (7, 'Neagu', 'Ionut', 'M', 'Vizita');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (9, 'Dobre', 'Maria', 'F', 'Schimbare resedinta');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (9, 'Balan', 'Marius', 'M', 'Schimbare resedinta');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (9, 'Rosu', 'Ana', 'F', 'Schimbare resedinta');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (10, 'Muresan', 'Andrei', 'M', 'Tranzit');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (10, 'Iliescu', 'Elena', 'F', 'Tranzit');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (11, 'Gheorghe', 'Radu', 'M', 'Vizita');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (8, 'Mihai', 'Maria', 'F', 'Transport Marfa');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (12, 'Constantin', 'Irina', 'F', 'Transport Marfa');
+
+INSERT INTO CALATOR (id_vehicul, nume, prenume, sex, scop) 
+VALUES (6, 'Moldovan', 'Paul', 'M', 'Transport Marfa');
+
+
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (1, '986847520', 'Popescu', 'Ana', 'Romania', 'F', DATE '1990-05-15', DATE '2025-05-14', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (2, '897085090', 'Ionescu', 'Mihai', 'Romania', 'M',DATE '1985-09-20',DATE '2024-09-19', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (3, '239011681', 'Radu', 'Maria', 'Romania', 'F',DATE '1978-03-10',DATE '2023-03-09', 'temporar');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (4, '991724658', 'Dumitrescu', 'Andrei', 'Romania', 'M',DATE '1993-11-25',DATE '2027-11-24', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (5, '517880083', 'Constantinescu', 'Elena', 'Romania', 'F',DATE '1980-07-08',DATE '2026-07-07', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (6, '565838558', 'Stefanescu', 'Ion', 'Romania', 'M',DATE '1975-12-30',DATE '2022-12-29', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (7, '323028769', 'Georgescu', 'Andreea', 'Romania', 'F',DATE '1982-04-18',DATE '2028-04-17', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (8, '215322929', 'Iordache', 'George', 'Romania', 'M',DATE '1995-08-12',DATE '2029-08-11', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (9, '350861253', 'Popa', 'Alexandra', 'Romania', 'F',DATE '1997-01-05',DATE '2031-01-04', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (10, '215181809', 'Voicu', 'Cristian', 'Romania', 'M',DATE '1988-06-28',DATE '2023-06-27', 'diplomatic');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (11, '948965351', 'Dragomir', 'Ana', 'Romania', 'F',DATE '1983-09-14',DATE '2022-09-13', 'diplomatic');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (12, '354028325', 'Neagu', 'Ionut', 'Romania', 'M',DATE '1990-02-07',DATE '2026-02-06', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (13, '946595641', 'Dobre', 'Maria', 'Romania', 'F',DATE '1986-11-19',DATE '2024-11-18', 'temporar');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (14, '474653940', 'Balan', 'Marius', 'Romania', 'M',DATE '1977-10-03',DATE '2028-10-02', 'temporar');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (15, '609986215', 'Rosu', 'Ana', 'Romania', 'F',DATE '1984-05-27',DATE '2028-05-26', 'temporar');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (16, '245421843', 'Muresan', 'Andrei', 'Romania', 'M',DATE '1992-03-11',DATE '2027-03-10', 'diplomatic');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (17, '776576117', 'Iliescu', 'Elena', 'Romania', 'F',DATE'1973-08-22',DATE '2025-08-21', 'diplomatic');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (18, '401798590', 'Gheorghe', 'Radu', 'Romania', 'M',DATE '1987-12-17',DATE '2023-12-16', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (19, '227433541', 'Mihai', 'Maria', 'Romania', 'F',DATE '1989-01-30',DATE '2028-01-29', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (20, '605255544', 'Constantin', 'Irina', 'Romania', 'F',DATE '1994-06-05',DATE '2022-06-04', 'normal');
+
+INSERT INTO PASAPORT (id_calator, numar, nume, prenume, tara_provenienta, sex, data_nasterii, data_de_expirare, tip_pasaport) 
+VALUES (21, '850100297', 'Moldovan', 'Paul', 'Romania', 'M',DATE '1981-09-10',DATE '2027-09-09', 'normal');
+
+
+
+INSERT INTO DECLARATIE_BUNURI (id_calator, valoare, tip_bunuri) 
+VALUES (18, 3000, 'substante psihotrope');
+
+INSERT INTO DECLARATIE_BUNURI (id_calator, valoare, tip_bunuri) 
+VALUES (3, 1000, 'metale pretioase');
+
+INSERT INTO DECLARATIE_BUNURI (id_calator, valoare, tip_bunuri) 
+VALUES (12, 1800, 'culturale');
+
+INSERT INTO DECLARATIE_BUNURI (id_calator, valoare, tip_bunuri) 
+VALUES (4, 8000, 'culturale');
+
+INSERT INTO DECLARATIE_BUNURI (id_calator, valoare, tip_bunuri) 
+VALUES (13, 25000, 'metale pretioase');
+
+INSERT INTO DECLARATIE_BUNURI (id_calator, valoare, tip_bunuri) 
+VALUES (17, 16000, 'metale pretioase');
+
+
+--6
+CREATE OR REPLACE PROCEDURE detalii_calatori IS
+    TYPE t_pasager_info IS VARRAY(10) OF VARCHAR2(200); 
+    TYPE t_vehicul_pasageri IS TABLE OF t_pasager_info; 
+    TYPE t_vehicule_rosu IS TABLE OF VARCHAR2(200) INDEX BY PLS_INTEGER;
+
+    v_date_vehicul t_vehicul_pasageri := t_vehicul_pasageri(); 
+    v_vehicule_rosii t_vehicule_rosu; 
+    v_index PLS_INTEGER := 0;
+
+    CURSOR c_vehicul IS
+        SELECT v.id_vehicul, v.culoare, tp.numar_persoane
+        FROM VEHICUL v
+        JOIN TRANSPORT_PERSOANE tp ON v.id_vehicul = tp.id_vehicul
+        WHERE tp.numar_persoane <= 4;
+
+    CURSOR c_pasageri(p_id_vehicul VEHICUL.id_vehicul%TYPE) IS
+        SELECT c.nume || ' ' || c.prenume AS full_name
+        FROM CALATOR c
+        JOIN PASAPORT p ON c.id_calator = p.id_calator
+        WHERE c.id_vehicul = p_id_vehicul
+          AND p.data_de_expirare > SYSDATE; 
+
+    v_lista_pasageri t_pasager_info;
+
+BEGIN
+    FOR v_rec IN c_vehicul LOOP
+        v_lista_pasageri := t_pasager_info();
+
+        v_lista_pasageri.EXTEND;
+        v_lista_pasageri(v_lista_pasageri.COUNT) := 'Vehicul ID: ' || v_rec.id_vehicul;
+
+        FOR p_rec IN c_pasageri(v_rec.id_vehicul) LOOP
+            v_lista_pasageri.EXTEND;
+            v_lista_pasageri(v_lista_pasageri.COUNT) := p_rec.full_name;
+        END LOOP;
+
+        v_date_vehicul.EXTEND;
+        v_date_vehicul(v_date_vehicul.COUNT) := v_lista_pasageri;
+        IF v_rec.culoare = 'Rosu' THEN
+            v_index := v_index + 1;
+            v_vehicule_rosii(v_index) := 'Vehicul ID: ' || v_rec.id_vehicul;
+        END IF;
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('Vehicule rosii:');
+    FOR i IN v_vehicule_rosii.FIRST .. v_vehicule_rosii.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE(v_vehicule_rosii(i));
+    END LOOP;
+
+    FOR i IN 1 .. v_date_vehicul.COUNT LOOP
+        DBMS_OUTPUT.PUT_LINE('Vehicul si pasageri cu pasaport valabil:');
+        FOR j IN 1 .. v_date_vehicul(i).COUNT LOOP
+            DBMS_OUTPUT.PUT_LINE(v_date_vehicul(i)(j));
+        END LOOP;
+        DBMS_OUTPUT.PUT_LINE('-------------------------');
+    END LOOP;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Eroare necunoscuta: ' || SQLERRM);
+END detalii_calatori;
+/
+
+BEGIN
+    detalii_calatori;
+END;
+/
+
+
+--7
+CREATE OR REPLACE PROCEDURE top_puncte_vamale IS
+    v_punct_nume PUNCT_VAMAL.nume%TYPE;
+    v_nr_agenti NUMBER;
+    v_id_punct_vamal PUNCT_VAMAL.id_punct_vamal%TYPE;
+
+    CURSOR c_puncte_vamale IS
+        SELECT p.nume, COUNT(a.id_agent_vamal) AS nr_agenti, p.id_punct_vamal
+        FROM PUNCT_VAMAL p
+        JOIN AGENT_VAMAL a ON p.id_punct_vamal = a.id_punct_vamal
+        GROUP BY p.nume, p.id_punct_vamal
+        ORDER BY nr_agenti DESC;
+        
+    CURSOR c_incidente(p_id_punct_vamal PUNCT_VAMAL.id_punct_vamal%TYPE) IS
+        SELECT a.nume || ' ' || a.prenume AS nume_agent, i.tip
+        FROM AGENT_VAMAL a
+        JOIN INCIDENT i ON a.id_agent_vamal = i.id_agent_vamal
+        WHERE a.id_punct_vamal = p_id_punct_vamal
+          AND i.data >= ADD_MONTHS(SYSDATE, -6);
+          
+    v_urm_agent VARCHAR(2000) := '.';
+
+BEGIN
+    OPEN c_puncte_vamale;
+    LOOP
+        FETCH c_puncte_vamale INTO v_punct_nume, v_nr_agenti, v_id_punct_vamal;
+        EXIT WHEN c_puncte_vamale%ROWCOUNT > 5 OR c_puncte_vamale%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('Punct vamal: ' || v_punct_nume || ' (Numar agenti: ' || v_nr_agenti || ')');
+
+        FOR incidente_rec IN c_incidente(v_id_punct_vamal) LOOP
+            IF incidente_rec.nume_agent != v_urm_agent THEN
+                v_urm_agent := incidente_rec.nume_agent;
+                DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------');
+                DBMS_OUTPUT.PUT_LINE('  Agent: ' || incidente_rec.nume_agent);
+                DBMS_OUTPUT.PUT_LINE('      Lista incidente:');
+            END IF;
+            DBMS_OUTPUT.PUT_LINE('          ' || incidente_rec.tip);
+        END LOOP;
+        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE('');
+        
+    END LOOP;
+    CLOSE c_puncte_vamale;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Eroare: ' || SQLERRM);
+END top_puncte_vamale;
+/
+
+BEGIN
+    top_puncte_vamale;
+END;
+/
+
+--8
+CREATE OR REPLACE FUNCTION valoare_contracte (p_punct_vamal_nume IN VARCHAR2,
+                                               p_firma_id IN NUMBER
+                                               )
+    RETURN VARCHAR2 
+
+IS
+
+v_total_valoare NUMBER := 0;
+v_exista_vama NUMBER := 0;
+v_exista_firma NUMBER := 0;
+
+ex_fara_contracte EXCEPTION;
+ex_firma_sau_punct_invalid EXCEPTION;
+BEGIN
+
+    SELECT COUNT(*)
+    INTO v_exista_vama
+    FROM PUNCT_VAMAL
+    WHERE nume = p_punct_vamal_nume;
+
+    SELECT COUNT(*)
+    INTO v_exista_firma
+    FROM FIRMA
+    WHERE id_firma = p_firma_id;
+
+    IF v_exista_vama = 0 OR v_exista_firma = 0 THEN
+        RAISE ex_firma_sau_punct_invalid;
+    END IF;
+    
+    IF v_exista_vama > 1 OR v_exista_firma > 1 THEN
+        RAISE TOO_MANY_ROWS;
+    END IF;
+
+
+
+    SELECT SUM(s.valoare)
+    INTO v_total_valoare
+    FROM CONTRACT c
+    INNER JOIN SERVICIU s ON c.id_serviciu = s.id_serviciu
+    INNER JOIN PUNCT_VAMAL p ON c.id_punct_vamal = p.id_punct_vamal
+    INNER JOIN FIRMA f ON c.id_firma = f.id_firma
+    WHERE p.nume = p_punct_vamal_nume AND f.id_firma = p_firma_id;
+
+
+    IF v_total_valoare IS NULL THEN
+    RAISE NO_DATA_FOUND;
+    END IF;
+
+RETURN 'Punctul vamal ' || p_punct_vamal_nume || ' a incheiat cu firma selectata contracte in valoare de ' || v_total_valoare || ' RON.'; 
+    EXCEPTION
+        WHEN ex_firma_sau_punct_invalid THEN
+        RETURN 'Eroare: Punct vamal sau firma invalida.';
+        WHEN TOO_MANY_ROWS THEN
+        RETURN 'Eroare: Prea exista mai multe firme cu numele ' || p_punct_vamal_nume || ' sau firme cu id-ul ' || p_firma_id;
+        WHEN NO_DATA_FOUND THEN
+        RETURN 'Eroare: Punctul vamal ' || p_punct_vamal_nume || ' nu a incheiat contracte cu firma selectata.';
+
+END valoare_contracte;
+/
+
+DECLARE
+v_result VARCHAR2(4000);
+BEGIN
+v_result := valoare_contracte('Bors', 1);
+DBMS_OUTPUT.PUT_LINE(v_result);
+v_result := valoare_contracte('Bors', 100);
+DBMS_OUTPUT.PUT_LINE(v_result);
+v_result := valoare_contracte('Calaft', 1);
+DBMS_OUTPUT.PUT_LINE(v_result);
+v_result := valoare_contracte('Calafat', 7);
+DBMS_OUTPUT.PUT_LINE(v_result);
+END;
+/
+
+
+--9
+CREATE OR REPLACE PROCEDURE get_vehicle_details(p_nume_punct_vamal IN VARCHAR2,
+                                                p_data_start IN DATE,
+                                                p_data_end IN DATE
+                                                ) 
+IS
+
+exc_fara_tranzactii EXCEPTION;
+exc_date_invalide EXCEPTION;
+exc_nume_invalid EXCEPTION;
+
+    CURSOR c_details IS
+    SELECT v.marca, v.numar_matriculare, v.tip_vehicul, t.sens,
+           c.nume || ' ' || c.prenume AS calator,
+           CASE 
+                WHEN p.data_de_expirare < SYSDATE THEN 'Expirat' 
+                ELSE 'Valid' 
+           END AS pasaport_status
+    FROM TRANZITARE t
+    INNER JOIN PUNCT_VAMAL a ON t.id_punct_vamal = a.id_punct_vamal
+    INNER JOIN VEHICUL v ON t.id_vehicul = v.id_vehicul
+    INNER JOIN CALATOR c ON v.id_vehicul = c.id_vehicul
+    INNER JOIN PASAPORT p ON c.id_calator = p.id_calator
+    WHERE a.nume = p_nume_punct_vamal
+      AND t.data_tranzitare BETWEEN p_data_start AND p_data_end;
+
+v_count NUMBER := 0;
+v_string VARCHAR2(100) := '.';
+v_nume_valid NUMBER;
+BEGIN
+    IF p_data_start > p_data_end THEN
+    RAISE exc_date_invalide;
+    END IF;
+    
+    SELECT COUNT(*)
+    INTO v_nume_valid
+    FROM PUNCT_VAMAL
+    WHERE nume = p_nume_punct_vamal;
+    
+    IF v_nume_valid = 0 THEN
+    RAISE exc_nume_invalid;
+    END IF;
+    
+    FOR inregistrare IN c_details 
+    LOOP
+        v_count := v_count + 1;
+        IF inregistrare.numar_matriculare != v_string THEN
+            DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------');
+            DBMS_OUTPUT.PUT_LINE('Marca: ' || inregistrare.marca || ', Nr: ' || inregistrare.numar_matriculare ||
+                                 ', Tip: ' || inregistrare.tip_vehicul || ', Sens: ' || inregistrare.sens);
+            v_string := inregistrare.numar_matriculare;
+        END IF;
+            DBMS_OUTPUT.PUT_LINE('Calator: ' || inregistrare.calator || ', Pasaport: ' || inregistrare.pasaport_status);
+    END LOOP;
+
+    IF v_count = 0 THEN
+    RAISE exc_fara_tranzactii;
+    END IF;
+    
+    EXCEPTION
+        WHEN exc_date_invalide THEN
+        DBMS_OUTPUT.PUT_LINE('Eroare: Data de inceput este mai mare decat data de sfarsit.');
+        
+        WHEN exc_fara_tranzactii THEN
+        DBMS_OUTPUT.PUT_LINE('Eroare: Nu exista tranzactii in perioada specificata.');
+        
+        WHEN exc_nume_invalid THEN
+        DBMS_OUTPUT.PUT_LINE('Eroare: Punctul vamal ' || p_nume_punct_vamal || ' nu exista.');
+            
+
+END get_vehicle_details;
+/
+
+BEGIN
+    get_vehicle_details('Calafat', TO_DATE('2024-01-01', 'YYYY-MM-DD'), TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+END;
+/
+
+BEGIN
+    get_vehicle_details('Calafat', TO_DATE('2025-01-01', 'YYYY-MM-DD'), TO_DATE('2025-01-02', 'YYYY-MM-DD'));
+END;
+/
+BEGIN
+    get_vehicle_details('Calat', TO_DATE('2024-01-01', 'YYYY-MM-DD'), TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+END;
+/
+BEGIN
+    get_vehicle_details('Calafat', TO_DATE('2024-12-31', 'YYYY-MM-DD'), TO_DATE('2024-11-30', 'YYYY-MM-DD'));
+END;
+/
+
+
+--10
+CREATE OR REPLACE TRIGGER trg_restrictii_agent_vamal
+BEFORE INSERT OR UPDATE OR DELETE ON AGENT_VAMAL
+DECLARE
+    v_ziua_saptamanii VARCHAR2(10);
+    v_ora_curenta NUMBER;
+BEGIN
+    SELECT TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=ENGLISH'), TO_NUMBER(TO_CHAR(SYSDATE, 'HH24'))
+    INTO v_ziua_saptamanii, v_ora_curenta
+    FROM DUAL;
+    IF v_ziua_saptamanii IN ('SAT', 'SUN') THEN
+            RAISE_APPLICATION_ERROR(-20004, 'Ștergerea unui agent vamal este permisă doar în zilele lucrătoare (Luni-Vineri).');
+        
+        ELSIF INSERTING THEN
+            IF v_ora_curenta NOT BETWEEN 0 AND 10 THEN
+                RAISE_APPLICATION_ERROR(-20001, 'Adaugarea unui agent vamal este permisa doar intre orele 00:00 si 10:00.');
+            END IF;
+    
+        ELSIF UPDATING THEN
+            IF v_ora_curenta NOT BETWEEN 10 AND 20 THEN
+                RAISE_APPLICATION_ERROR(-20002, 'Actualizarea unui agent vamal este permisa doar intre orele 10:00 si 20:00.');
+            END IF;
+    
+        ELSIF DELETING THEN
+            IF v_ora_curenta NOT BETWEEN 20 AND 23 AND v_ora_curenta NOT BETWEEN 0 AND 0 THEN
+                RAISE_APPLICATION_ERROR(-20003, 'Stergerea unui agent vamal este permisa doar intre orele 20:00 si 00:00.');
+            END IF;
+        END IF;
+END;
+/
+
+INSERT INTO AGENT_VAMAL (id_punct_vamal, nume, prenume, numar_telefon, functie, tura) 
+VALUES (2, 'Ion', 'Ion', '0722123457', 'Inspector', '16:00-0:00');
+
+UPDATE AGENT_VAMAL SET nume = 'Masala' where id_agent_vamal = 29;
+
+
+DELETE FROM AGENT_VAMAL WHERE id_agent_vamal = 29;
+
+
+--11
+CREATE OR REPLACE TRIGGER trg_promovare_agent
+BEFORE INSERT ON INCIDENT
+FOR EACH ROW
+DECLARE
+    v_nr_incidente NUMBER := 0;
+    v_functie_curenta VARCHAR2(50);
+BEGIN
+    SELECT COUNT(*)
+    INTO v_nr_incidente
+    FROM INCIDENT
+    WHERE id_agent_vamal = :NEW.id_agent_vamal
+      AND data >= ADD_MONTHS(SYSDATE, -6);
+
+    IF v_nr_incidente >= 4 THEN
+        SELECT functie
+        INTO v_functie_curenta
+        FROM AGENT_VAMAL
+        WHERE id_agent_vamal = :NEW.id_agent_vamal;
+
+        CASE v_functie_curenta
+            WHEN 'Agent' THEN
+                UPDATE AGENT_VAMAL
+                SET functie = 'Administrator'
+                WHERE id_agent_vamal = :NEW.id_agent_vamal;
+            WHEN 'Administrator' THEN
+                IF v_nr_incidente >= 9 THEN
+                    UPDATE AGENT_VAMAL
+                    SET functie = 'Inspector'
+                    WHERE id_agent_vamal = :NEW.id_agent_vamal;
+                END IF;
+        END CASE;
+    END IF;
+END;
+/
+
+    SELECT a.id_agent_vamal, a.nume, a.prenume, a.functie, COUNT(i.id_incident) AS nr_incidente
+    FROM AGENT_VAMAL a
+    INNER JOIN INCIDENT i ON a.id_agent_vamal = i.id_agent_vamal
+    WHERE i.data >= ADD_MONTHS(SYSDATE, -6)
+    GROUP BY a.id_agent_vamal, a.nume, a.prenume, a.functie;
+ 
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Substante ilegale raportate', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Documente falsificate', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Bunuri neraportate', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Bunuri neraportate', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Bunuri neraportate', SYSDATE);   
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Substante ilegale raportate', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Tentativa de mita', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Documente falsificate', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Tentativa de mita', SYSDATE);
+    INSERT INTO INCIDENT (id_agent_vamal, tip, data) 
+    VALUES (21, 'Documente falsificate', SYSDATE);
+    
+    SELECT a.id_agent_vamal, a.nume, a.prenume, a.functie, COUNT(i.id_incident) AS nr_incidente
+    FROM AGENT_VAMAL a
+    INNER JOIN INCIDENT i ON a.id_agent_vamal = i.id_agent_vamal
+    WHERE i.data >= ADD_MONTHS(SYSDATE, -6)
+    GROUP BY a.id_agent_vamal, a.nume, a.prenume, a.functie;
+
+
+--12
+CREATE TABLE LOG_LDD (
+    tip_operatie VARCHAR2(50),
+    tip_obiect VARCHAR2(50),
+    nume_obiect VARCHAR2(50),
+    utiliz VARCHAR2(30),
+    data TIMESTAMP
+);
+
+
+CREATE OR REPLACE TRIGGER trigger_ldd
+AFTER CREATE OR ALTER OR DROP ON SCHEMA
+DECLARE
+    v_user VARCHAR2(30);
+    v_data_op TIMESTAMP;
+BEGIN
+    SELECT USER INTO v_user FROM DUAL;
+    SELECT SYSTIMESTAMP INTO v_data_op FROM DUAL;
+
+    INSERT INTO LOG_LDD (
+        tip_operatie, 
+        nume_obiect, 
+        tip_obiect, 
+        utiliz, 
+        data
+    )
+    VALUES (
+        ORA_SYSEVENT,                
+        ORA_DICT_OBJ_NAME,          
+        ORA_DICT_OBJ_TYPE,          
+        v_user,                 
+        v_data_op                
+    );
+END;
+/
+
+CREATE TABLE TEST(
+    numar NUMBER
+    );
+    
+ALTER TABLE TEST ADD (caractere VARCHAR2(200));
+ALTER TABLE TEST ADD (x TIMESTAMP);
+DROP TABLE TEST;
+
